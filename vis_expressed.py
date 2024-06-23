@@ -1,3 +1,5 @@
+# grabs expressed.json from /out and creates visualizations of the board at the saved steps.
+
 import matplotlib.pyplot as plt
 import numpy as np
 import json

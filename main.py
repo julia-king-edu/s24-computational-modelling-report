@@ -1,3 +1,17 @@
+# implementation variables
+output_directory = "paper/code/replication/out/"
+use_paralellization = True
+save_every_n = 20 # saves the results of the simulation after this amount of steps.
+
+# model parameters
+steps = 5000
+gridsize = 30
+w = 0.5
+gamma = 20
+
+######################################################################################
+
+
 # import block
 
 from mesa import Agent, Model
@@ -245,18 +259,18 @@ class SSTModel(Model):
         self.pol_percentiles = [self.__polarization_percentiles__()]
         self.disutility = [sum([agent.disutility for agent in self.agent_list])]
         
-    def save_state(self):
+    def save_state(self, outdir : str):
         """Saves the expressed attitudes and coordinates of each agent, as well as the summary statistics."""
         # current expressed attitudes
         state = [{"x": agent.pos[0], "y": agent.pos[1], "expressed": agent.expressed} for agent in self.agent_list]
         state = {"step": self.stepcount, "state": state}
         self.expressed_states.append(state)
-        with open("paper/code/replication/out/expressed.json", 'w') as f:
+        with open(f"{outdir}/expressed.json", 'w') as f:
             json.dump(self.expressed_states, f)
         # summary statistics
         summary = self.summary()
-        summary["totals"].to_csv("paper/code/replication/out/totals.csv", index = False)
-        summary["pol_percentiles"].to_csv("paper/code/replication/out/pol_percentiles.csv", index = True)
+        summary["totals"].to_csv(f"{outdir}/totals.csv", index = False)
+        summary["pol_percentiles"].to_csv(f"{outdir}/pol_percentiles.csv", index = True)
     
     def step(self, parallel : bool = False):
         """Executes one step of the model"""
@@ -291,13 +305,13 @@ class SSTModel(Model):
 
 
 # run model
-model = SSTModel(30, 30, w = 0.5, gamma = 20)
+model = SSTModel(width = gridsize, height = gridsize, w = w, gamma = gamma)
 expressed = []
-for i in range(5000):
-    model.step(parallel = True)
+for i in range(steps):
+    model.step(parallel = use_paralellization)
     state = model.summary()
     print(state["totals"])
     print(state["pol_percentiles"])
-    if (i % 20) == 0:
+    if (i % save_every_n) == 0:
         # export
-        model.save_state()
+        model.save_state(outdir = output_directory)
